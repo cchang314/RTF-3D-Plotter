@@ -44,6 +44,7 @@
             justify-content: center;
             gap: 15px;
             margin-bottom: 30px;
+            flex-wrap: wrap;
         }
 
         .category-btn {
@@ -66,6 +67,135 @@
 
         .category-btn:hover {
             transform: translateY(-2px);
+        }
+
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .view-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .view-btn.active {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .view-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-container {
+            display: none;
+        }
+
+        .leaderboard-container.active {
+            display: block;
+        }
+
+        .compare-container {
+            display: none;
+        }
+
+        .compare-container.active {
+            display: block;
+        }
+
+        .leaderboard-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .leaderboard-tab {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .leaderboard-tab.active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .leaderboard-tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        .leaderboard-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .leaderboard-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .leaderboard-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .rank-cell {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #667eea;
+            width: 60px;
+        }
+
+        .name-cell {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .score-cell {
+            font-weight: bold;
+            color: #4caf50;
+            text-align: right;
+            width: 100px;
         }
 
         .question {
@@ -169,6 +299,33 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
+        .neither-btn {
+            display: block;
+            margin: 10px auto 20px auto;
+            padding: 12px 35px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .neither-btn:hover {
+            transform: scale(1.05);
+            background: #ee5a6f;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
         .comparison-count {
             text-align: center;
             color: #666;
@@ -181,22 +338,45 @@
     <div class="container">
         <h1>RTF Rankings</h1>
         
-        <div class="category-selector">
-            <button class="category-btn active" data-category="random">Random</button>
-            <button class="category-btn" data-category="rizz">Rizz</button>
-            <button class="category-btn" data-category="tizz">Tizz</button>
-            <button class="category-btn" data-category="freak">Freak</button>
+        <div class="view-toggle">
+            <button class="view-btn active" data-view="compare">Compare</button>
+            <button class="view-btn" data-view="leaderboard">Leaderboard</button>
         </div>
 
-        <div class="question" id="question">Who has more Rizz?</div>
+        <div id="compareView" class="compare-container active">
+            <div class="category-selector">
+                <button class="category-btn active" data-category="random">Random</button>
+                <button class="category-btn" data-category="rizz">Rizz</button>
+                <button class="category-btn" data-category="tizz">Tizz</button>
+                <button class="category-btn" data-category="freak">Freak</button>
+            </div>
 
-        <div class="comparison-container" id="comparisonContainer">
-            <!-- Cards will be inserted here -->
+            <div class="question" id="question">Who has more Rizz?</div>
+
+            <div class="comparison-container" id="comparisonContainer">
+                <!-- Cards will be inserted here -->
+            </div>
+
+            <div class="button-container">
+                <button class="neither-btn" id="neitherBtn">Neither</button>
+                <button class="skip-btn" id="skipBtn">Skip</button>
+            </div>
+
+            <div class="comparison-count" id="comparisonCount">Comparisons: 0</div>
         </div>
 
-        <button class="skip-btn" id="skipBtn">Skip Comparison</button>
+        <div id="leaderboardView" class="leaderboard-container">
+            <div class="leaderboard-tabs">
+                <button class="leaderboard-tab active" data-leaderboard="overall">Overall</button>
+                <button class="leaderboard-tab" data-leaderboard="rizz">Rizz</button>
+                <button class="leaderboard-tab" data-leaderboard="tizz">Tizz</button>
+                <button class="leaderboard-tab" data-leaderboard="freak">Freak</button>
+            </div>
 
-        <div class="comparison-count" id="comparisonCount">Comparisons: 0</div>
+            <div class="leaderboard-table" id="leaderboardTable">
+                <!-- Leaderboard will be inserted here -->
+            </div>
+        </div>
     </div>
 
     <script>
@@ -208,8 +388,8 @@
         // 2. Copy "Project URL" and paste below
         // 3. Copy "anon public" key and paste below
         
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL_HERE';  // e.g., 'https://xxxxxxxxxxxxx.supabase.co'
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY_HERE';  // Long string starting with 'eyJ...'
+        const SUPABASE_URL = 'https://cxytmlxqoficotadtmab.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4eXRtbHhxb2ZpY290YWR0bWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MDcyMzksImV4cCI6MjA3ODM4MzIzOX0.Bx95F7ufVJmLUlJmwH4zvNdE5EmbGsD8GIwmMW0flbc';
         
         // Check if Supabase is configured
         const isSupabaseConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
@@ -452,7 +632,7 @@
         }
 
         // Load ratings from Supabase
-        async function loadRatings() {
+        async function loadRatings(retryCount = 0) {
             try {
                 const { data, error } = await supabase
                     .from('member_ratings')
@@ -460,7 +640,20 @@
                 
                 if (error) {
                     console.error('Error loading ratings:', error);
-                    alert('Failed to load ratings from database. Please check your Supabase setup.');
+                    console.error('Error code:', error.code);
+                    console.error('Error message:', error.message);
+                    console.error('Error details:', error.details);
+                    
+                    // Check if it's a "table doesn't exist" error
+                    if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+                        console.warn('⚠️ Table "member_ratings" does not exist. Please create it using the SQL in SUPABASE_SETUP.md');
+                        alert('Database table not found. Please create the "member_ratings" table in Supabase using the SQL provided in the setup guide.');
+                    } else if (error.code === '42501') {
+                        console.warn('⚠️ Permission denied. Please check Row Level Security policies.');
+                        alert('Permission denied. Please check your Supabase Row Level Security policies.');
+                    } else {
+                        alert(`Failed to load ratings: ${error.message}`);
+                    }
                     throw error;
                 }
                 
@@ -477,10 +670,28 @@
                     });
                     console.log(`✅ Loaded ${data.length} ratings from database`);
                 } else {
-                    console.log('No existing ratings found - starting fresh');
+                    console.log('✅ Connected to database - no existing ratings found, starting fresh');
                 }
             } catch (err) {
                 console.error('Failed to load ratings:', err);
+                
+                // Check for DataCloneError (browser extension conflict)
+                if (err.name === 'DataCloneError' || err.message.includes('postMessage')) {
+                    if (retryCount < 2) {
+                        console.warn(`⚠️ Browser extension conflict detected. Retrying (${retryCount + 1}/2)...`);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        return loadRatings(retryCount + 1);
+                    } else {
+                        console.error('❌ Browser extension conflict. Please try:');
+                        console.error('1. Disable browser extensions (especially ad blockers)');
+                        console.error('2. Use incognito/private mode');
+                        console.error('3. Try a different browser');
+                        alert('Browser extension conflict detected. Please try:\n\n1. Disable ad blockers/extensions\n2. Use incognito/private browsing mode\n3. Try a different browser\n\nThe site will continue with default ratings.');
+                        // Don't throw - allow site to continue with default ratings
+                        return;
+                    }
+                }
+                
                 throw err;
             }
         }
@@ -585,14 +796,14 @@
             return currentCategory;
         }
 
-        // Normalize rating to 0-1 scale
+        // Normalize rating to 0-100 scale
         function normalizeRating(rating) {
             // Glicko-2 ratings typically range from about 800-2200
-            // We'll map this to 0-1
+            // We'll map this to 0-100
             const min = 800;
             const max = 2200;
-            const normalized = (rating - min) / (max - min);
-            return Math.max(0, Math.min(1, normalized)).toFixed(3);
+            const normalized = (rating - min) / (max - min) * 100;
+            return Math.max(0, Math.min(100, normalized)).toFixed(1);
         }
 
         // Animate score counting
@@ -741,7 +952,7 @@
                     const oldScore = card.dataset.oldScore;
                     const newScore = normalizeRating(ratings[member][actualCategory].rating);
                     const change = isWinner ? winnerChange : loserChange;
-                    const normalizedChange = (change / 1400).toFixed(3); // Approximate normalization
+                    const normalizedChange = ((change / 1400) * 100).toFixed(1); // Normalize change to 0-100 scale
                     
                     // Animate the score counting
                     animateScore(scoreElement, oldScore, newScore);
@@ -793,6 +1004,126 @@
             }
         }
 
+        // Calculate overall score based on vector magnitude
+        function calculateOverallScore(memberName) {
+            const rizzScore = parseFloat(normalizeRating(ratings[memberName].rizz.rating));
+            const tizzScore = parseFloat(normalizeRating(ratings[memberName].tizz.rating));
+            const freakScore = parseFloat(normalizeRating(ratings[memberName].freak.rating));
+            
+            // Calculate magnitude of vector (rizz, tizz, freak)
+            const magnitude = Math.sqrt(rizzScore * rizzScore + tizzScore * tizzScore + freakScore * freakScore);
+            
+            // Normalize to 0-100 scale
+            // Maximum possible magnitude is sqrt(100^2 + 100^2 + 100^2) = sqrt(30000) ≈ 173.2
+            const maxMagnitude = Math.sqrt(100 * 100 + 100 * 100 + 100 * 100);
+            return ((magnitude / maxMagnitude) * 100).toFixed(1);
+        }
+
+        // Generate leaderboard data
+        function generateLeaderboard(category) {
+            const memberNames = Object.keys(members);
+            const leaderboardData = memberNames.map(name => {
+                let score;
+                if (category === 'overall') {
+                    score = parseFloat(calculateOverallScore(name));
+                } else {
+                    score = parseFloat(normalizeRating(ratings[name][category].rating));
+                }
+                return { name, score };
+            });
+
+            // Sort by score descending
+            leaderboardData.sort((a, b) => b.score - a.score);
+
+            // Add rank
+            leaderboardData.forEach((entry, index) => {
+                entry.rank = index + 1;
+            });
+
+            return leaderboardData;
+        }
+
+        // Display leaderboard
+        function displayLeaderboard(category) {
+            const leaderboardData = generateLeaderboard(category);
+            const tableContainer = document.getElementById('leaderboardTable');
+            
+            const categoryNames = {
+                overall: 'Overall',
+                rizz: 'Rizz',
+                tizz: 'Tizz',
+                freak: 'Freak'
+            };
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="rank-cell">Rank</th>
+                            <th class="name-cell">Name</th>
+                            <th class="score-cell">${categoryNames[category]} Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            leaderboardData.forEach(entry => {
+                html += `
+                    <tr>
+                        <td class="rank-cell">#${entry.rank}</td>
+                        <td class="name-cell">${entry.name}</td>
+                        <td class="score-cell">${entry.score.toFixed(1)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContainer.innerHTML = html;
+        }
+
+        // View toggle functionality
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                
+                // Update button states
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show/hide views
+                if (view === 'compare') {
+                    document.getElementById('compareView').classList.add('active');
+                    document.getElementById('leaderboardView').classList.remove('active');
+                } else {
+                    document.getElementById('compareView').classList.remove('active');
+                    document.getElementById('leaderboardView').classList.add('active');
+                    
+                    // Display default leaderboard (overall)
+                    const activeTab = document.querySelector('.leaderboard-tab.active');
+                    const category = activeTab ? activeTab.dataset.leaderboard : 'overall';
+                    displayLeaderboard(category);
+                }
+            });
+        });
+
+        // Leaderboard tab functionality
+        document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const category = tab.dataset.leaderboard;
+                
+                // Update tab states
+                document.querySelectorAll('.leaderboard-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Display leaderboard for selected category
+                displayLeaderboard(category);
+            });
+        });
+
         // Category buttons
         document.querySelectorAll('.category-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -805,12 +1136,113 @@
             });
         });
 
+        // Handle "Neither" selection - both lose
+        async function handleNeither() {
+            if (selectedMember) return; // Already selected
+            
+            selectedMember = 'neither'; // Mark as selected
+            const actualCategory = document.querySelector('.member-card').dataset.category;
+            const member1 = currentPair[0];
+            const member2 = currentPair[1];
+
+            // Disable further clicks
+            const cards = document.querySelectorAll('.member-card');
+            cards.forEach(card => {
+                card.style.pointerEvents = 'none';
+            });
+
+            // First, show the original scores and mark both as not selected
+            cards.forEach(card => {
+                const scoreElement = card.querySelector('.member-score');
+                const oldScore = card.dataset.oldScore;
+                
+                card.classList.add('not-selected');
+                scoreElement.style.visibility = 'visible';
+                scoreElement.textContent = `Score: ${oldScore}`;
+            });
+
+            // Wait 300ms, then update ratings for both as losses
+            setTimeout(async () => {
+                // Update ratings using Glicko-2 - both get losses
+                const member1OldRating = ratings[member1][actualCategory].rating;
+                const member2OldRating = ratings[member2][actualCategory].rating;
+
+                // Member 1 loses to Member 2
+                const member1Update = glicko.updateRating(
+                    ratings[member1][actualCategory].rating,
+                    ratings[member1][actualCategory].rd,
+                    ratings[member1][actualCategory].volatility,
+                    [{ rating: ratings[member2][actualCategory].rating, rd: ratings[member2][actualCategory].rd }],
+                    [0] // Loss
+                );
+
+                // Member 2 loses to Member 1
+                const member2Update = glicko.updateRating(
+                    ratings[member2][actualCategory].rating,
+                    ratings[member2][actualCategory].rd,
+                    ratings[member2][actualCategory].volatility,
+                    [{ rating: ratings[member1][actualCategory].rating, rd: ratings[member1][actualCategory].rd }],
+                    [0] // Loss
+                );
+
+                ratings[member1][actualCategory] = member1Update;
+                ratings[member2][actualCategory] = member2Update;
+
+                // Record this matchup for the category
+                recordMatchup(member1, member2, actualCategory);
+
+                // Save updated ratings to Supabase
+                await saveRating(member1, actualCategory, member1Update);
+                await saveRating(member2, actualCategory, member2Update);
+
+                // Calculate changes
+                const member1Change = member1Update.rating - member1OldRating;
+                const member2Change = member2Update.rating - member2OldRating;
+
+                // Animate scores and update display
+                cards.forEach(card => {
+                    const member = card.dataset.member;
+                    
+                    const scoreElement = card.querySelector('.member-score');
+                    const changeElement = card.querySelector('.score-change');
+                    
+                    const oldScore = card.dataset.oldScore;
+                    const newScore = normalizeRating(ratings[member][actualCategory].rating);
+                    const change = member === member1 ? member1Change : member2Change;
+                    const normalizedChange = ((change / 1400) * 100).toFixed(1);
+                    
+                    // Animate the score counting
+                    animateScore(scoreElement, oldScore, newScore);
+                    
+                    // Show the change indicator (should be negative for both)
+                    changeElement.className = 'score-change score-decrease';
+                    changeElement.textContent = `${change > 0 ? '+' : ''}${normalizedChange}`;
+                });
+
+                comparisonCounts[actualCategory]++;
+                updateComparisonCount();
+                
+                // Auto-advance after animation completes
+                setTimeout(() => {
+                    displayComparison();
+                }, 750);
+            }, 300);
+        }
+
         // Skip button
         document.getElementById('skipBtn').addEventListener('click', displayComparison);
 
+        // Neither button
+        document.getElementById('neitherBtn').addEventListener('click', handleNeither);
+
         // Initialize - load ratings then display
         async function initialize() {
-            await loadRatings();
+            try {
+                await loadRatings();
+            } catch (err) {
+                console.error('Failed to load ratings, continuing with defaults:', err);
+                // Continue anyway with default ratings
+            }
             updateQuestion();
             updateComparisonCount();
             displayComparison();
