@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RTF Rankings</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -199,6 +200,37 @@
     </div>
 
     <script>
+        // ================================
+        // SUPABASE CONFIGURATION
+        // ================================
+        // Get these values from your Supabase dashboard:
+        // 1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
+        // 2. Copy "Project URL" and paste below
+        // 3. Copy "anon public" key and paste below
+        
+        const SUPABASE_URL = 'https://cxytmlxqoficotadtmab.supabase.co';  // e.g., 'https://xxxxxxxxxxxxx.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4eXRtbHhxb2ZpY290YWR0bWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MDcyMzksImV4cCI6MjA3ODM4MzIzOX0.Bx95F7ufVJmLUlJmwH4zvNdE5EmbGsD8GIwmMW0flbc';  // Long string starting with 'eyJ...'
+        
+        // Check if Supabase is configured
+        const isSupabaseConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
+                                     SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE';
+        
+        // Initialize Supabase client (only if configured)
+        let supabase = null;
+        if (isSupabaseConfigured) {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log('✅ Supabase connected');
+            } catch (err) {
+                console.error('Failed to initialize Supabase:', err);
+            }
+        } else {
+            console.warn('⚠️ Supabase not configured - running in local mode. Ratings will not persist.');
+        }
+        
+        // ================================
+        // MEMBER DATA
+        // ================================
         // Member data (first 10 entries)
         const members = {
             "Aiden Suganuma": "https://www.thecube.llc/static/media/aidensuganuma.3126d63249c98b402919.jpg",
@@ -319,10 +351,15 @@
             }
         }
 
-        // Initialize ratings for all members
+        // ================================
+        // SUPABASE DATABASE FUNCTIONS
+        // ================================
+        
+        // Initialize ratings for all members (local cache)
         const ratings = {};
         const categories = ['rizz', 'tizz', 'freak'];
         
+        // Initialize default ratings
         for (const member in members) {
             ratings[member] = {};
             for (const category of categories) {
@@ -331,6 +368,69 @@
                     rd: 350,
                     volatility: 0.06
                 };
+            }
+        }
+
+        // Load ratings from Supabase
+        async function loadRatings() {
+            if (!supabase) {
+                console.log('Supabase not configured - using default ratings');
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('member_ratings')
+                    .select('*');
+                
+                if (error) {
+                    console.error('Error loading ratings:', error);
+                    return;
+                }
+                
+                // Update local ratings with database values
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        if (ratings[row.member_name]) {
+                            ratings[row.member_name][row.category] = {
+                                rating: row.rating,
+                                rd: row.rd,
+                                volatility: row.volatility
+                            };
+                        }
+                    });
+                    console.log(`✅ Loaded ${data.length} ratings from database`);
+                }
+            } catch (err) {
+                console.error('Failed to load ratings:', err);
+            }
+        }
+
+        // Save rating to Supabase
+        async function saveRating(memberName, category, ratingData) {
+            if (!supabase) {
+                return; // Skip saving if Supabase not configured
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('member_ratings')
+                    .upsert({
+                        member_name: memberName,
+                        category: category,
+                        rating: ratingData.rating,
+                        rd: ratingData.rd,
+                        volatility: ratingData.volatility,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'member_name,category'
+                    });
+                
+                if (error) {
+                    console.error('Error saving rating:', error);
+                }
+            } catch (err) {
+                console.error('Failed to save rating:', err);
             }
         }
 
@@ -440,7 +540,7 @@
         }
 
         // Select member
-        function selectMember(memberName, actualCategory) {
+        async function selectMember(memberName, actualCategory) {
             if (selectedMember) return; // Already selected
             
             selectedMember = memberName;
@@ -466,7 +566,7 @@
             });
 
             // Wait 300ms, then update ratings and animate to new scores
-            setTimeout(() => {
+            setTimeout(async () => {
                 // Update ratings using Glicko-2
                 const winnerOldRating = ratings[winner][actualCategory].rating;
                 const loserOldRating = ratings[loser][actualCategory].rating;
@@ -489,6 +589,10 @@
 
                 ratings[winner][actualCategory] = winnerUpdate;
                 ratings[loser][actualCategory] = loserUpdate;
+
+                // Save updated ratings to Supabase
+                await saveRating(winner, actualCategory, winnerUpdate);
+                await saveRating(loser, actualCategory, loserUpdate);
 
                 // Calculate changes
                 const winnerChange = winnerUpdate.rating - winnerOldRating;
@@ -572,10 +676,15 @@
         // Skip button
         document.getElementById('skipBtn').addEventListener('click', displayComparison);
 
-        // Initialize
-        updateQuestion();
-        updateComparisonCount();
-        displayComparison();
+        // Initialize - load ratings then display
+        async function initialize() {
+            await loadRatings();
+            updateQuestion();
+            updateComparisonCount();
+            displayComparison();
+        }
+        
+        initialize();
     </script>
 </body>
 </html>
