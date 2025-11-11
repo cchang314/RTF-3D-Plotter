@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTF Rankings</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1200px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 3em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .category-selector {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .category-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .category-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .category-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .view-btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .view-btn.active {
+            background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .view-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-container {
+            display: none;
+        }
+
+        .leaderboard-container.active {
+            display: block;
+        }
+
+        .compare-container {
+            display: none;
+        }
+
+        .compare-container.active {
+            display: block;
+        }
+
+        .leaderboard-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .leaderboard-tab {
+            padding: 10px 25px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .leaderboard-tab.active {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+            color: white;
+        }
+
+        .leaderboard-tab:hover {
+            transform: translateY(-2px);
+        }
+
+        .leaderboard-table {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .leaderboard-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .leaderboard-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        .leaderboard-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .leaderboard-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .leaderboard-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .rank-cell {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #667eea;
+            width: 60px;
+        }
+
+        .name-cell {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .score-cell {
+            font-weight: bold;
+            color: #4caf50;
+            text-align: right;
+            width: 100px;
+        }
+
+        .question {
+            text-align: center;
+            font-size: 1.8em;
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .comparison-container {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .member-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            width: 280px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .member-card:hover {
+            transform: translateY(-10px);
+            border-color: #667eea;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        .member-card.selected {
+            border-color: #4caf50;
+            background: #f1f8e9;
+        }
+
+        .member-card.not-selected {
+            border-color: #f44336;
+            background: #ffebee;
+        }
+
+        .member-image {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .member-name {
+            text-align: center;
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .member-score {
+            text-align: center;
+            font-size: 1.1em;
+            color: #666;
+        }
+
+        .score-change {
+            text-align: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+            min-height: 30px;
+        }
+
+        .score-increase {
+            color: #4caf50;
+        }
+
+        .score-decrease {
+            color: #f44336;
+        }
+
+        .skip-btn {
+            display: block;
+            margin: 30px auto;
+            padding: 15px 40px;
+            background: #757575;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .skip-btn:hover {
+            transform: scale(1.05);
+            background: #616161;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .neither-btn {
+            display: block;
+            margin: 10px auto 20px auto;
+            padding: 12px 35px;
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .neither-btn:hover {
+            transform: scale(1.05);
+            background: #ee5a6f;
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.4);
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .comparison-count {
+            text-align: center;
+            color: #666;
+            margin-top: 20px;
+            font-size: 1.1em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>RTF Rankings</h1>
+        
+        <div class="view-toggle">
+            <button class="view-btn active" data-view="compare">Compare</button>
+            <button class="view-btn" data-view="leaderboard">Leaderboard</button>
+        </div>
+
+        <div id="compareView" class="compare-container active">
+            <div class="category-selector">
+                <button class="category-btn active" data-category="random">Random</button>
+                <button class="category-btn" data-category="rizz">Rizz</button>
+                <button class="category-btn" data-category="tizz">Tizz</button>
+                <button class="category-btn" data-category="freak">Freak</button>
+            </div>
+
+            <div class="question" id="question">Who has more Rizz?</div>
+
+            <div class="comparison-container" id="comparisonContainer">
+                <!-- Cards will be inserted here -->
+            </div>
+
+            <div class="button-container">
+                <button class="neither-btn" id="neitherBtn">Neither</button>
+                <button class="skip-btn" id="skipBtn">Skip</button>
+            </div>
+
+            <div class="comparison-count" id="comparisonCount">Comparisons: 0</div>
+        </div>
+
+        <div id="leaderboardView" class="leaderboard-container">
+            <div class="leaderboard-tabs">
+                <button class="leaderboard-tab active" data-leaderboard="overall">Overall</button>
+                <button class="leaderboard-tab" data-leaderboard="rizz">Rizz</button>
+                <button class="leaderboard-tab" data-leaderboard="tizz">Tizz</button>
+                <button class="leaderboard-tab" data-leaderboard="freak">Freak</button>
+            </div>
+
+            <div class="leaderboard-table" id="leaderboardTable">
+                <!-- Leaderboard will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ================================
+        // SUPABASE CONFIGURATION
+        // ================================
+        // Get these values from your Supabase dashboard:
+        // 1. Go to: https://supabase.com/dashboard/project/YOUR_PROJECT/settings/api
+        // 2. Copy "Project URL" and paste below
+        // 3. Copy "anon public" key and paste below
+        
+        const SUPABASE_URL = 'https://cxytmlxqoficotadtmab.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4eXRtbHhxb2ZpY290YWR0bWFiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4MDcyMzksImV4cCI6MjA3ODM4MzIzOX0.Bx95F7ufVJmLUlJmwH4zvNdE5EmbGsD8GIwmMW0flbc';
+        
+        // Check if Supabase is configured
+        const isSupabaseConfigured = SUPABASE_URL !== 'YOUR_SUPABASE_URL_HERE' && 
+                                     SUPABASE_ANON_KEY !== 'YOUR_SUPABASE_ANON_KEY_HERE';
+        
+        if (!isSupabaseConfigured) {
+            document.body.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div style="background: white; padding: 40px; border-radius: 20px; max-width: 600px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+                        <h1 style="color: #667eea; margin-bottom: 20px;">⚠️ Configuration Required</h1>
+                        <p style="color: #333; font-size: 1.2em; line-height: 1.6;">
+                            This site requires Supabase to be configured. Please update the <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code> values in the code.
+                        </p>
+                        <p style="color: #666; margin-top: 20px;">
+                            See <strong>SUPABASE_SETUP.md</strong> for instructions.
+                        </p>
+                    </div>
+                </div>
+            `;
+            throw new Error('Supabase configuration required');
+        }
+        
+        // Initialize Supabase client
+        let supabase;
+        try {
+            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('✅ Supabase connected');
+        } catch (err) {
+            document.body.innerHTML = `
+                <div style="display: flex; justify-content: center; align-items: center; height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div style="background: white; padding: 40px; border-radius: 20px; max-width: 600px; text-align: center; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);">
+                        <h1 style="color: #f44336; margin-bottom: 20px;">❌ Connection Error</h1>
+                        <p style="color: #333; font-size: 1.2em; line-height: 1.6;">
+                            Failed to connect to Supabase. Please check your credentials.
+                        </p>
+                        <p style="color: #666; margin-top: 20px; font-family: monospace;">
+                            ${err.message}
+                        </p>
+                    </div>
+                </div>
+            `;
+            throw err;
+        }
+        
+        // ================================
+        // MEMBER DATA
+        // ================================
+        // All club members from 2024-2028
+        const members = {
+            "Aiden Suganuma": "https://www.thecube.llc/static/media/aidensuganuma.3126d63249c98b402919.jpg",
+            "Alex Boniske": "https://www.thecube.llc/static/media/alexboniske.c958ca550435720511aa.jpg",
+            "Alexis Fox": "https://www.thecube.llc/static/media/alexisfox.9fddedf46775b7a836ca.jpg",
+            "Avrick Altmann": "https://www.thecube.llc/static/media/avrickaltmann.2962baac481c96d2e2a3.jpg",
+            "Brian Mason": "https://www.thecube.llc/static/media/brianmason.1d754f5b7455d04cb69d.jpg",
+            "Brianna Yang": "https://www.thecube.llc/static/media/briannayang.b1a6cc543f582a9ed89f.jpg",
+            "Claire Chang": "https://www.thecube.llc/static/media/clairechang.0ba7a8a19b6658fc97d4.jpg",
+            "Jane Shin": "https://www.thecube.llc/static/media/janeshin.9c11a60627771be1c29c.jpg",
+            "Jonah Stein": "https://www.thecube.llc/static/media/jonahstein.3b2666663214205c61a9.jpg",
+            "Julia Chen": "https://www.thecube.llc/static/media/juliachen.3e523ce7d5d895f59168.jpg",
+            "Paulina Vvedenskaya": "https://www.thecube.llc/static/media/paulinavvedenskaya.ad758ad986f8399743e7.jpg",
+            "Rafael Soh": "https://www.thecube.llc/static/media/rafaelsoh.90dc2c640fb1455af0f9.jpg",
+            "Rashmi Thapa": "https://www.thecube.llc/static/media/rashmithapa.1f8a2869f3728f81c5f0.jpg",
+            "Sarthak Agrawal": "https://www.thecube.llc/static/media/sarthakagrawal.98becf14d552de9f748a.jpg",
+            "Sarthak Dhawan": "https://www.thecube.llc/static/media/sarthakdhawan.cb8eb19a944daedbaf6e.jpg",
+            "Thomas Hines": "https://www.thecube.llc/static/media/thomashines.8c6c95b7ff1aaf4761be.jpg",
+            "Andri Kadaifciu": "https://www.thecube.llc/static/media/andrikadaifciu.e6ce027737160b390d5e.jpg",
+            "Bilguun Zolzaya": "https://www.thecube.llc/static/media/bilguunzolzaya.85b87ad99f77588e0df1.jpg",
+            "Brian Chen": "https://www.thecube.llc/static/media/brianchen.5862da7baff8f6d49e24.jpg",
+            "Chloe Yang": "https://www.thecube.llc/static/media/chloeyang.103e0dc0e2317c85200e.jpg",
+            "David Shenkerman": "https://www.thecube.llc/static/media/davidshenkerman.22ebe2a9aace6242b9e4.jpg",
+            "Dhruva Barua": "https://www.thecube.llc/static/media/dhruvabarua.69420ae454b5d67f9e4b.jpg",
+            "Evan Bulan": "https://www.thecube.llc/static/media/evanbulan.dee3aaa44b3b01832937.jpg",
+            "Judy He": "https://www.thecube.llc/static/media/judyhe.44e9886e4b17e3840a2b.jpg",
+            "Juliana Gates": "https://www.thecube.llc/static/media/julianagates.9f4911a90d03a8118b67.jpg",
+            "Kartikeye Gupta": "https://www.thecube.llc/static/media/kartikeyegupta.6d81d7fa62376dd6ea68.jpg",
+            "Kayla Liang": "https://www.thecube.llc/static/media/kaylaliang.f5d825fb70cc1289a0d6.jpg",
+            "Kaylyn Zhong": "https://www.thecube.llc/static/media/kaylynzhong.82f7ccb726cfb79639cf.jpg",
+            "Michelle Li": "https://www.thecube.llc/static/media/michelleli.371a405bace790d810e7.jpg",
+            "Nikhil Pesaladinne": "https://www.thecube.llc/static/media/nikhilpesaladinne.5fe0b2660b878da2ff60.jpg",
+            "Raphael Mukondiwa": "https://www.thecube.llc/static/media/raphaelmukondiwa.2d622fe8d1c290cc4034.jpg",
+            "Sarah Tandon": "https://www.thecube.llc/static/media/sarahtandon.0f34021f85521a40eaf9.jpg",
+            "Ting Ting Li": "https://www.thecube.llc/static/media/tingtingli.48df24abdb42b394cc2b.jpg",
+            "Aaron Hsu": "https://www.thecube.llc/static/media/aaronhsu.2c939db0f8437be9aff3.jpg",
+            "Anna Liu": "https://www.thecube.llc/static/media/annaliu.3d393ab8b322c834e47d.jpg",
+            "Arvindh Manian": "https://www.thecube.llc/static/media/arvindhmanian.79c1ac445b9c2381b85e.jpg",
+            "Aubteen Pour-Biazar": "https://www.thecube.llc/static/media/aubteenpour-biazar.2fe97968ea5340e786ed.jpg",
+            "Ayush Jain": "https://www.thecube.llc/static/media/ayushjain.047dbf06730ab5a713fc.jpg",
+            "Bill Ssewanyana": "https://www.thecube.llc/static/media/billssewanyana.6c45e1539bd4abea396e.jpg",
+            "Divyansh Jain": "https://www.thecube.llc/static/media/divyanshjain.c896d81dfa744de4eaa6.jpg",
+            "Eleanor Taylor": "https://www.thecube.llc/static/media/eleanortaylor.7cea9d66216289f8f304.jpg",
+            "Hannah Choi": "https://www.thecube.llc/static/media/hannahchoi.1e663bbe71f35f8a5207.jpg",
+            "John Buxton": "https://www.thecube.llc/static/media/johnbuxton.ce3d102780478f9f8f1a.jpg",
+            "John Schappert": "https://www.thecube.llc/static/media/johnschappert.2cfb578d07ea4c8c74ba.jpg",
+            "John Xu": "https://www.thecube.llc/static/media/johnxu.a2f51e78502b38b5fd49.jpg",
+            "Kunling Tong": "https://www.thecube.llc/static/media/kunlingtong.1de16cae090c0e5f6f08.jpg",
+            "Lasal Mapitigama": "https://www.thecube.llc/static/media/lasalmapitigama.9bd546f48653a7043337.jpg",
+            "Nathan Shenkerman": "https://www.thecube.llc/static/media/nathanshenkerman.fb948bf1fbc207538a15.jpg",
+            "Peter Liu": "https://www.thecube.llc/static/media/peterliu.3947d888af49b33d37a1.jpg",
+            "Sophia Liu": "https://www.thecube.llc/static/media/sophialiu.d697baa2eb666bc8184c.jpg",
+            "Taylor Moorehead": "https://www.thecube.llc/static/media/taylormoorehead.cc6d6987fecd991e5754.jpg",
+            "Yura Heo": "https://www.thecube.llc/static/media/yuraheo.a04ed96ca10f8b4b03d4.jpg",
+            "Aryan Mathur": "https://www.thecube.llc/static/media/aryanmathur.cc4031f997b4b70846e2.jpg",
+            "Christian Okokhere": "https://www.thecube.llc/static/media/christianokokhere.95a6c04738cf781a6e62.jpg",
+            "Holly Zhuang": "https://www.thecube.llc/static/media/hollyzhuang.cc0a66059d3e38390240.jpg",
+            "Kasey Park": "https://www.thecube.llc/static/media/kaseypark.60d9451c439fe852d3fb.jpg",
+            "N Wang": "https://www.thecube.llc/static/media/nwang.e0bb994957dd4c64be7d.jpg",
+            "One Chowdhury": "https://www.thecube.llc/static/media/onechowdhury.4c6419c65cdb77cc82b3.jpg",
+            "Pranay Vure": "https://www.thecube.llc/static/media/pranayvure.8fb7489f0f5e023e76df.jpg",
+            "Richard Kim": "https://www.thecube.llc/static/media/richardkim.6a833178d95102a91634.jpg",
+            "Aden Clemente": "https://www.thecube.llc/static/media/adenclemente.fc3aa2297d3914516876.jpg",
+            "Athena Yao": "https://www.thecube.llc/static/media/athenayao.90600323a19baa053bad.jpg",
+            "Clay Bromley": "https://www.thecube.llc/static/media/claybromley.bcc073e823955c7b5fc9.jpg",
+            "Nils Roede": "https://www.thecube.llc/static/media/nilsroede.9903add37c3cb945a0d3.jpg"
+        };
+
+        // Glicko-2 implementation
+        class Glicko2 {
+            constructor() {
+                this.tau = 0.5; // System constant
+                this.epsilon = 0.000001;
+            }
+
+            scale(rating) {
+                return (rating - 1500) / 173.7178;
+            }
+
+            unscale(rating) {
+                return rating * 173.7178 + 1500;
+            }
+
+            g(rd) {
+                return 1 / Math.sqrt(1 + 3 * rd * rd / (Math.PI * Math.PI));
+            }
+
+            E(mu, mu_j, rd_j) {
+                return 1 / (1 + Math.exp(-this.g(rd_j) * (mu - mu_j)));
+            }
+
+            updateRating(rating, rd, volatility, opponents, outcomes) {
+                const mu = this.scale(rating);
+                const phi = rd / 173.7178;
+                
+                let v_inv = 0;
+                let delta = 0;
+
+                for (let i = 0; i < opponents.length; i++) {
+                    const mu_j = this.scale(opponents[i].rating);
+                    const phi_j = opponents[i].rd / 173.7178;
+                    const outcome = outcomes[i];
+                    
+                    const g_phi_j = this.g(phi_j);
+                    const E_val = this.E(mu, mu_j, phi_j);
+                    
+                    v_inv += g_phi_j * g_phi_j * E_val * (1 - E_val);
+                    delta += g_phi_j * (outcome - E_val);
+                }
+
+                const v = 1 / v_inv;
+                delta *= v;
+
+                // Update volatility
+                const a = Math.log(volatility * volatility);
+                const f = (x) => {
+                    const exp_x = Math.exp(x);
+                    const phi_sq = phi * phi;
+                    const delta_sq = delta * delta;
+                    const v_plus = v + exp_x;
+                    
+                    return (exp_x * (delta_sq - phi_sq - v - exp_x)) / 
+                           (2 * v_plus * v_plus) - 
+                           (x - a) / (this.tau * this.tau);
+                };
+
+                let A = a;
+                let B;
+                
+                if (delta * delta > phi * phi + v) {
+                    B = Math.log(delta * delta - phi * phi - v);
+                } else {
+                    let k = 1;
+                    while (f(a - k * this.tau) < 0) {
+                        k++;
+                    }
+                    B = a - k * this.tau;
+                }
+
+                let f_A = f(A);
+                let f_B = f(B);
+
+                while (Math.abs(B - A) > this.epsilon) {
+                    const C = A + (A - B) * f_A / (f_B - f_A);
+                    const f_C = f(C);
+
+                    if (f_C * f_B < 0) {
+                        A = B;
+                        f_A = f_B;
+                    } else {
+                        f_A = f_A / 2;
+                    }
+
+                    B = C;
+                    f_B = f_C;
+                }
+
+                const new_volatility = Math.exp(A / 2);
+                
+                // Update rating deviation
+                const phi_star = Math.sqrt(phi * phi + new_volatility * new_volatility);
+                const new_phi = 1 / Math.sqrt(1 / (phi_star * phi_star) + 1 / v);
+                
+                // Update rating
+                const new_mu = mu + new_phi * new_phi * delta / v;
+                
+                return {
+                    rating: this.unscale(new_mu),
+                    rd: new_phi * 173.7178,
+                    volatility: new_volatility
+                };
+            }
+        }
+
+        // ================================
+        // SUPABASE DATABASE FUNCTIONS
+        // ================================
+        
+        // Initialize ratings for all members (local cache)
+        const ratings = {};
+        const categories = ['rizz', 'tizz', 'freak'];
+        
+        // Initialize default ratings
+        for (const member in members) {
+            ratings[member] = {};
+            for (const category of categories) {
+                ratings[member][category] = {
+                    rating: 1500,
+                    rd: 350,
+                    volatility: 0.06
+                };
+            }
+        }
+
+        // Load ratings from Supabase
+        async function loadRatings(retryCount = 0) {
+            try {
+                const { data, error } = await supabase
+                    .from('member_ratings')
+                    .select('*');
+                
+                if (error) {
+                    console.error('Error loading ratings:', error);
+                    console.error('Error code:', error.code);
+                    console.error('Error message:', error.message);
+                    console.error('Error details:', error.details);
+                    
+                    // Check if it's a "table doesn't exist" error
+                    if (error.code === 'PGRST116' || error.message.includes('does not exist')) {
+                        console.warn('⚠️ Table "member_ratings" does not exist. Please create it using the SQL in SUPABASE_SETUP.md');
+                        alert('Database table not found. Please create the "member_ratings" table in Supabase using the SQL provided in the setup guide.');
+                    } else if (error.code === '42501') {
+                        console.warn('⚠️ Permission denied. Please check Row Level Security policies.');
+                        alert('Permission denied. Please check your Supabase Row Level Security policies.');
+                    } else {
+                        alert(`Failed to load ratings: ${error.message}`);
+                    }
+                    throw error;
+                }
+                
+                // Update local ratings with database values
+                if (data && data.length > 0) {
+                    data.forEach(row => {
+                        if (ratings[row.member_name]) {
+                            ratings[row.member_name][row.category] = {
+                                rating: row.rating,
+                                rd: row.rd,
+                                volatility: row.volatility
+                            };
+                        }
+                    });
+                    console.log(`✅ Loaded ${data.length} ratings from database`);
+                } else {
+                    console.log('✅ Connected to database - no existing ratings found, starting fresh');
+                }
+            } catch (err) {
+                console.error('Failed to load ratings:', err);
+                
+                // Check for DataCloneError (browser extension conflict)
+                if (err.name === 'DataCloneError' || err.message.includes('postMessage')) {
+                    if (retryCount < 2) {
+                        console.warn(`⚠️ Browser extension conflict detected. Retrying (${retryCount + 1}/2)...`);
+                        await new Promise(resolve => setTimeout(resolve, 500));
+                        return loadRatings(retryCount + 1);
+                    } else {
+                        console.error('❌ Browser extension conflict. Please try:');
+                        console.error('1. Disable browser extensions (especially ad blockers)');
+                        console.error('2. Use incognito/private mode');
+                        console.error('3. Try a different browser');
+                        alert('Browser extension conflict detected. Please try:\n\n1. Disable ad blockers/extensions\n2. Use incognito/private browsing mode\n3. Try a different browser\n\nThe site will continue with default ratings.');
+                        // Don't throw - allow site to continue with default ratings
+                        return;
+                    }
+                }
+                
+                throw err;
+            }
+        }
+
+        // Save rating to Supabase
+        async function saveRating(memberName, category, ratingData) {
+            try {
+                const { error } = await supabase
+                    .from('member_ratings')
+                    .upsert({
+                        member_name: memberName,
+                        category: category,
+                        rating: ratingData.rating,
+                        rd: ratingData.rd,
+                        volatility: ratingData.volatility,
+                        updated_at: new Date().toISOString()
+                    }, {
+                        onConflict: 'member_name,category'
+                    });
+                
+                if (error) {
+                    console.error('Error saving rating:', error);
+                    throw error;
+                }
+            } catch (err) {
+                console.error('Failed to save rating:', err);
+                throw err;
+            }
+        }
+
+        const glicko = new Glicko2();
+        let currentCategory = 'random';
+        let currentPair = null;
+        let selectedMember = null;
+        let comparisonCounts = { rizz: 0, tizz: 0, freak: 0 };
+        
+        // Track all matchups per category in this session
+        const sessionMatchups = {
+            rizz: new Set(),
+            tizz: new Set(),
+            freak: new Set()
+        };
+
+        // Create a unique key for a matchup (order-independent)
+        function getMatchupKey(member1, member2) {
+            return [member1, member2].sort().join('|||');
+        }
+
+        // Check if a matchup has been shown in this category
+        function hasMatchupBeenShown(member1, member2, category) {
+            const key = getMatchupKey(member1, member2);
+            return sessionMatchups[category].has(key);
+        }
+
+        // Record a matchup for a category
+        function recordMatchup(member1, member2, category) {
+            const key = getMatchupKey(member1, member2);
+            sessionMatchups[category].add(key);
+        }
+
+        // Get all possible pairs
+        function getAllPossiblePairs() {
+            const memberNames = Object.keys(members);
+            const pairs = [];
+            
+            for (let i = 0; i < memberNames.length; i++) {
+                for (let j = i + 1; j < memberNames.length; j++) {
+                    pairs.push([memberNames[i], memberNames[j]]);
+                }
+            }
+            
+            return pairs;
+        }
+
+        // Get random pair that hasn't been shown for this category
+        function getRandomPair(category) {
+            const allPairs = getAllPossiblePairs();
+            
+            // Filter out pairs that have already been shown for this category
+            const availablePairs = allPairs.filter(pair => 
+                !hasMatchupBeenShown(pair[0], pair[1], category)
+            );
+            
+            // If we've exhausted all pairs for this category, reset and start over
+            if (availablePairs.length === 0) {
+                console.log(`All matchups exhausted for ${category}, resetting...`);
+                sessionMatchups[category].clear();
+                return getRandomPair(category); // Recursive call with fresh slate
+            }
+            
+            // Pick a random pair from available ones
+            const randomIndex = Math.floor(Math.random() * availablePairs.length);
+            return availablePairs[randomIndex];
+        }
+
+        // Get actual category to use for this comparison
+        function getActualCategory() {
+            if (currentCategory === 'random') {
+                const categories = ['rizz', 'tizz', 'freak'];
+                return categories[Math.floor(Math.random() * categories.length)];
+            }
+            return currentCategory;
+        }
+
+        // Normalize rating to 0-100 scale
+        function normalizeRating(rating) {
+            // Glicko-2 ratings typically range from about 800-2200
+            // We'll map this to 0-100
+            const min = 800;
+            const max = 2200;
+            const normalized = (rating - min) / (max - min) * 100;
+            return Math.max(0, Math.min(100, normalized)).toFixed(1);
+        }
+
+        // Animate score counting
+        function animateScore(element, startScore, endScore, duration = 400) {
+            const startValue = parseFloat(startScore);
+            const endValue = parseFloat(endScore);
+            const startTime = performance.now();
+            
+            function update(currentTime) {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function for smooth animation
+                const easeProgress = progress < 0.5 
+                    ? 2 * progress * progress 
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2;
+                
+                const currentValue = startValue + (endValue - startValue) * easeProgress;
+                element.textContent = `Score: ${currentValue.toFixed(3)}`;
+                
+                if (progress < 1) {
+                    requestAnimationFrame(update);
+                }
+            }
+            
+            requestAnimationFrame(update);
+        }
+
+        // Display comparison
+        function displayComparison() {
+            const actualCategory = getActualCategory();
+            currentPair = getRandomPair(actualCategory);
+            selectedMember = null;
+            
+            const container = document.getElementById('comparisonContainer');
+            
+            // Preload images before displaying cards
+            const imagePromises = currentPair.map(memberName => {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => resolve({ memberName, loaded: true });
+                    img.onerror = () => resolve({ memberName, loaded: false }); // Resolve even on error to prevent hanging
+                    img.src = members[memberName];
+                });
+            });
+            
+            // Wait for all images to load
+            Promise.all(imagePromises).then(() => {
+                container.innerHTML = '';
+                
+                currentPair.forEach(memberName => {
+                    const rating = ratings[memberName][actualCategory];
+                    const normalizedScore = normalizeRating(rating.rating);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'member-card';
+                    card.dataset.member = memberName;
+                    card.dataset.category = actualCategory; // Store the actual category being used
+                    card.dataset.oldScore = normalizedScore; // Store the current score
+                    card.innerHTML = `
+                        <img src="${members[memberName]}" alt="${memberName}" class="member-image">
+                        <div class="member-name">${memberName}</div>
+                        <div class="member-score" style="visibility: hidden;">Score: ${normalizedScore}</div>
+                        <div class="score-change"></div>
+                    `;
+                    
+                    card.addEventListener('click', () => selectMember(memberName, actualCategory));
+                    container.appendChild(card);
+                });
+            });
+
+            // Update question for the actual category being compared
+            updateQuestionForCategory(actualCategory);
+        }
+
+        // Select member
+        async function selectMember(memberName, actualCategory) {
+            if (selectedMember) return; // Already selected
+            
+            selectedMember = memberName;
+            const winner = memberName;
+            const loser = currentPair.find(m => m !== winner);
+
+            // Disable further clicks
+            const cards = document.querySelectorAll('.member-card');
+            cards.forEach(card => {
+                card.style.pointerEvents = 'none';
+            });
+
+            // First, show the original scores
+            cards.forEach(card => {
+                const member = card.dataset.member;
+                const isWinner = member === winner;
+                const scoreElement = card.querySelector('.member-score');
+                const oldScore = card.dataset.oldScore;
+                
+                card.classList.add(isWinner ? 'selected' : 'not-selected');
+                scoreElement.style.visibility = 'visible';
+                scoreElement.textContent = `Score: ${oldScore}`;
+            });
+
+            // Wait 300ms, then update ratings and animate to new scores
+            setTimeout(async () => {
+                // Update ratings using Glicko-2
+                const winnerOldRating = ratings[winner][actualCategory].rating;
+                const loserOldRating = ratings[loser][actualCategory].rating;
+
+                const winnerUpdate = glicko.updateRating(
+                    ratings[winner][actualCategory].rating,
+                    ratings[winner][actualCategory].rd,
+                    ratings[winner][actualCategory].volatility,
+                    [{ rating: ratings[loser][actualCategory].rating, rd: ratings[loser][actualCategory].rd }],
+                    [1]
+                );
+
+                const loserUpdate = glicko.updateRating(
+                    ratings[loser][actualCategory].rating,
+                    ratings[loser][actualCategory].rd,
+                    ratings[loser][actualCategory].volatility,
+                    [{ rating: ratings[winner][actualCategory].rating, rd: ratings[winner][actualCategory].rd }],
+                    [0]
+                );
+
+                ratings[winner][actualCategory] = winnerUpdate;
+                ratings[loser][actualCategory] = loserUpdate;
+
+                // Record this matchup for the category
+                recordMatchup(winner, loser, actualCategory);
+
+                // Save updated ratings to Supabase
+                await saveRating(winner, actualCategory, winnerUpdate);
+                await saveRating(loser, actualCategory, loserUpdate);
+
+                // Calculate changes
+                const winnerChange = winnerUpdate.rating - winnerOldRating;
+                const loserChange = loserUpdate.rating - loserOldRating;
+
+                // Animate scores and update display
+                cards.forEach(card => {
+                    const member = card.dataset.member;
+                    const isWinner = member === winner;
+                    
+                    const scoreElement = card.querySelector('.member-score');
+                    const changeElement = card.querySelector('.score-change');
+                    
+                    const oldScore = card.dataset.oldScore;
+                    const newScore = normalizeRating(ratings[member][actualCategory].rating);
+                    const change = isWinner ? winnerChange : loserChange;
+                    const normalizedChange = ((change / 1400) * 100).toFixed(1); // Normalize change to 0-100 scale
+                    
+                    // Animate the score counting
+                    animateScore(scoreElement, oldScore, newScore);
+                    
+                    // Show the change indicator
+                    changeElement.className = `score-change ${isWinner ? 'score-increase' : 'score-decrease'}`;
+                    changeElement.textContent = `${change > 0 ? '+' : ''}${normalizedChange}`;
+                });
+
+                comparisonCounts[actualCategory]++;
+                updateComparisonCount();
+                
+                // Auto-advance after animation completes (400ms animation + 350ms buffer)
+                setTimeout(() => {
+                    displayComparison();
+                }, 750);
+            }, 300);
+        }
+
+        // Update comparison count
+        function updateComparisonCount() {
+            if (currentCategory === 'random') {
+                const total = comparisonCounts.rizz + comparisonCounts.tizz + comparisonCounts.freak;
+                document.getElementById('comparisonCount').textContent = 
+                    `Total Comparisons: ${total} (Rizz: ${comparisonCounts.rizz}, Tizz: ${comparisonCounts.tizz}, Freak: ${comparisonCounts.freak})`;
+            } else {
+                document.getElementById('comparisonCount').textContent = 
+                    `Comparisons (${currentCategory}): ${comparisonCounts[currentCategory]}`;
+            }
+        }
+
+        // Update question text for a specific category
+        function updateQuestionForCategory(category) {
+            const categoryNames = {
+                rizz: 'Rizz',
+                tizz: 'Tizz',
+                freak: 'Freak'
+            };
+            document.getElementById('question').textContent = 
+                `Who has more ${categoryNames[category]}?`;
+        }
+
+        // Update question text based on current mode
+        function updateQuestion() {
+            if (currentCategory === 'random') {
+                document.getElementById('question').textContent = 'Random Mode';
+            } else {
+                updateQuestionForCategory(currentCategory);
+            }
+        }
+
+        // Calculate overall score based on vector magnitude
+        function calculateOverallScore(memberName) {
+            const rizzScore = parseFloat(normalizeRating(ratings[memberName].rizz.rating));
+            const tizzScore = parseFloat(normalizeRating(ratings[memberName].tizz.rating));
+            const freakScore = parseFloat(normalizeRating(ratings[memberName].freak.rating));
+            
+            // Calculate magnitude of vector (rizz, tizz, freak)
+            const magnitude = Math.sqrt(rizzScore * rizzScore + tizzScore * tizzScore + freakScore * freakScore);
+            
+            // Normalize to 0-100 scale
+            // Maximum possible magnitude is sqrt(100^2 + 100^2 + 100^2) = sqrt(30000) ≈ 173.2
+            const maxMagnitude = Math.sqrt(100 * 100 + 100 * 100 + 100 * 100);
+            return ((magnitude / maxMagnitude) * 100).toFixed(1);
+        }
+
+        // Generate leaderboard data
+        function generateLeaderboard(category) {
+            const memberNames = Object.keys(members);
+            const leaderboardData = memberNames.map(name => {
+                let score;
+                if (category === 'overall') {
+                    score = parseFloat(calculateOverallScore(name));
+                } else {
+                    score = parseFloat(normalizeRating(ratings[name][category].rating));
+                }
+                return { name, score };
+            });
+
+            // Sort by score descending
+            leaderboardData.sort((a, b) => b.score - a.score);
+
+            // Add rank
+            leaderboardData.forEach((entry, index) => {
+                entry.rank = index + 1;
+            });
+
+            return leaderboardData;
+        }
+
+        // Display leaderboard
+        function displayLeaderboard(category) {
+            const leaderboardData = generateLeaderboard(category);
+            const tableContainer = document.getElementById('leaderboardTable');
+            
+            const categoryNames = {
+                overall: 'Overall',
+                rizz: 'Rizz',
+                tizz: 'Tizz',
+                freak: 'Freak'
+            };
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="rank-cell">Rank</th>
+                            <th class="name-cell">Name</th>
+                            <th class="score-cell">${categoryNames[category]} Score</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            leaderboardData.forEach(entry => {
+                html += `
+                    <tr>
+                        <td class="rank-cell">#${entry.rank}</td>
+                        <td class="name-cell">${entry.name}</td>
+                        <td class="score-cell">${entry.score.toFixed(1)}</td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                    </tbody>
+                </table>
+            `;
+
+            tableContainer.innerHTML = html;
+        }
+
+        // View toggle functionality
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const view = btn.dataset.view;
+                
+                // Update button states
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Show/hide views
+                if (view === 'compare') {
+                    document.getElementById('compareView').classList.add('active');
+                    document.getElementById('leaderboardView').classList.remove('active');
+                } else {
+                    document.getElementById('compareView').classList.remove('active');
+                    document.getElementById('leaderboardView').classList.add('active');
+                    
+                    // Display default leaderboard (overall)
+                    const activeTab = document.querySelector('.leaderboard-tab.active');
+                    const category = activeTab ? activeTab.dataset.leaderboard : 'overall';
+                    displayLeaderboard(category);
+                }
+            });
+        });
+
+        // Leaderboard tab functionality
+        document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const category = tab.dataset.leaderboard;
+                
+                // Update tab states
+                document.querySelectorAll('.leaderboard-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                // Display leaderboard for selected category
+                displayLeaderboard(category);
+            });
+        });
+
+        // Category buttons
+        document.querySelectorAll('.category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentCategory = btn.dataset.category;
+                updateQuestion();
+                updateComparisonCount();
+                displayComparison();
+            });
+        });
+
+        // Handle "Neither" selection - both lose
+        async function handleNeither() {
+            if (selectedMember) return; // Already selected
+            
+            selectedMember = 'neither'; // Mark as selected
+            const actualCategory = document.querySelector('.member-card').dataset.category;
+            const member1 = currentPair[0];
+            const member2 = currentPair[1];
+
+            // Disable further clicks
+            const cards = document.querySelectorAll('.member-card');
+            cards.forEach(card => {
+                card.style.pointerEvents = 'none';
+            });
+
+            // First, show the original scores and mark both as not selected
+            cards.forEach(card => {
+                const scoreElement = card.querySelector('.member-score');
+                const oldScore = card.dataset.oldScore;
+                
+                card.classList.add('not-selected');
+                scoreElement.style.visibility = 'visible';
+                scoreElement.textContent = `Score: ${oldScore}`;
+            });
+
+            // Wait 300ms, then update ratings for both as losses
+            setTimeout(async () => {
+                // Update ratings using Glicko-2 - both get losses
+                const member1OldRating = ratings[member1][actualCategory].rating;
+                const member2OldRating = ratings[member2][actualCategory].rating;
+
+                // Member 1 loses to Member 2
+                const member1Update = glicko.updateRating(
+                    ratings[member1][actualCategory].rating,
+                    ratings[member1][actualCategory].rd,
+                    ratings[member1][actualCategory].volatility,
+                    [{ rating: ratings[member2][actualCategory].rating, rd: ratings[member2][actualCategory].rd }],
+                    [0] // Loss
+                );
+
+                // Member 2 loses to Member 1
+                const member2Update = glicko.updateRating(
+                    ratings[member2][actualCategory].rating,
+                    ratings[member2][actualCategory].rd,
+                    ratings[member2][actualCategory].volatility,
+                    [{ rating: ratings[member1][actualCategory].rating, rd: ratings[member1][actualCategory].rd }],
+                    [0] // Loss
+                );
+
+                ratings[member1][actualCategory] = member1Update;
+                ratings[member2][actualCategory] = member2Update;
+
+                // Record this matchup for the category
+                recordMatchup(member1, member2, actualCategory);
+
+                // Save updated ratings to Supabase
+                await saveRating(member1, actualCategory, member1Update);
+                await saveRating(member2, actualCategory, member2Update);
+
+                // Calculate changes
+                const member1Change = member1Update.rating - member1OldRating;
+                const member2Change = member2Update.rating - member2OldRating;
+
+                // Animate scores and update display
+                cards.forEach(card => {
+                    const member = card.dataset.member;
+                    
+                    const scoreElement = card.querySelector('.member-score');
+                    const changeElement = card.querySelector('.score-change');
+                    
+                    const oldScore = card.dataset.oldScore;
+                    const newScore = normalizeRating(ratings[member][actualCategory].rating);
+                    const change = member === member1 ? member1Change : member2Change;
+                    const normalizedChange = ((change / 1400) * 100).toFixed(1);
+                    
+                    // Animate the score counting
+                    animateScore(scoreElement, oldScore, newScore);
+                    
+                    // Show the change indicator (should be negative for both)
+                    changeElement.className = 'score-change score-decrease';
+                    changeElement.textContent = `${change > 0 ? '+' : ''}${normalizedChange}`;
+                });
+
+                comparisonCounts[actualCategory]++;
+                updateComparisonCount();
+                
+                // Auto-advance after animation completes
+                setTimeout(() => {
+                    displayComparison();
+                }, 750);
+            }, 300);
+        }
+
+        // Skip button
+        document.getElementById('skipBtn').addEventListener('click', displayComparison);
+
+        // Neither button
+        document.getElementById('neitherBtn').addEventListener('click', handleNeither);
+
+        // Initialize - load ratings then display
+        async function initialize() {
+            try {
+                await loadRatings();
+            } catch (err) {
+                console.error('Failed to load ratings, continuing with defaults:', err);
+                // Continue anyway with default ratings
+            }
+            updateQuestion();
+            updateComparisonCount();
+            displayComparison();
+        }
+        
+        initialize();
+    </script>
+</body>
+</html>
