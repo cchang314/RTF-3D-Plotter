@@ -1,8 +1,9 @@
-// src/Scene.jsx (centralized raycast hover + click, reports tooltip position to parent)
+// src/Scene.jsx — with nice 3D axis labels + central raycast hover
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import Marker from "./Marker";
 import * as THREE from "three";
 import { useThree } from "@react-three/fiber";
+import { Text } from "@react-three/drei";
 
 function normalizeToRange(value, inMin = 0, inMax = 100, outMin = 0, outMax = 10) {
   return ((value - inMin) / (inMax - inMin)) * (outMax - outMin) + outMin;
@@ -66,15 +67,17 @@ export default function Scene({ data, selected, setSelected, setTooltip }) {
         const adaptiveThreshold = baseThreshold * (camDist / 10);
         if (best.dist <= adaptiveThreshold) {
           if (hoveredId !== best.id) setHoveredId(best.id);
-          // report tooltip: use the actual mouse client coords so tooltip aligns with cursor
-          setTooltip({ visible: true, x: e.clientX - dom.getBoundingClientRect().left, y: e.clientY - dom.getBoundingClientRect().top, item: best.item });
+          setTooltip({
+            visible: true,
+            x: e.clientX - dom.getBoundingClientRect().left,
+            y: e.clientY - dom.getBoundingClientRect().top,
+            item: best.item,
+          });
           return;
         }
       }
 
-      // nothing close enough
       if (hoveredId !== null) setHoveredId(null);
-      // hide tooltip
       setTooltip({ visible: false, x: 0, y: 0, item: null });
     }
 
@@ -110,8 +113,47 @@ export default function Scene({ data, selected, setSelected, setTooltip }) {
 
   return (
     <group>
+      {/* Axes lines */}
       <axesHelper args={[12]} position={[0, 0, 0]} />
 
+      {/* Fancy axis labels */}
+      <Text
+        position={[11.5, 0.3, 0]}
+        fontSize={0.7}
+        color="#79a1ffff"
+        outlineColor="#003366"
+        outlineWidth={0.02}
+        anchorX="center"
+        anchorY="middle"
+      >
+        Rizz →
+      </Text>
+      <Text
+        position={[0, 11.5, 0]}
+        rotation={[0, 0, Math.PI / 2]}
+        fontSize={0.7}
+        color="#79a1ffff"
+        outlineColor="#003366"
+        outlineWidth={0.02}
+        anchorX="center"
+        anchorY="middle"
+      >
+        Tizz →
+      </Text>
+      <Text
+        position={[0, 0.3, 11.5]}
+        rotation={[-Math.PI / 2, Math.PI / 2, Math.PI / 2]}
+        fontSize={0.7}
+        color="#79a1ffff"
+        outlineColor="#003366"
+        outlineWidth={0.02}
+        anchorX="center"
+        anchorY="middle"
+      >
+        ← Freak
+      </Text>
+
+      {/* Grids for visual depth */}
       <gridHelper args={[12, 12, "#888888", "#222222"]} rotation={[Math.PI / 2, 0, 0]} position={[6, 6, 0]} />
       <gridHelper args={[12, 12, "#666666", "#111111"]} position={[6, 0, 6]} />
       <gridHelper args={[12, 12, "#666666", "#111111"]} rotation={[0, 0, Math.PI / 2]} position={[0, 6, 6]} />

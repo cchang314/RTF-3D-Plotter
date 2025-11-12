@@ -1,11 +1,11 @@
 // src/App.jsx
-import React, { useEffect, useState, Suspense } from "react";
-import { Canvas } from "@react-three/fiber";
-import { OrbitControls } from "@react-three/drei";
+import React, { useEffect, useState, Suspense } from "react"; //Imports React library & hooks for state, lifecycle, and lazy loading
+import { Canvas } from "@react-three/fiber";       //Adds the React-managed 3D rendering surface (wrapper around Three.js so 3D components can be treated as React components)
+import { OrbitControls } from "@react-three/drei"; //Adds camera controls to the 3D scene
 
-import Scene from "./Scene";
-import fetchAllRatings from "./fetchRatings";
-import localData from "./data";
+import Scene from "./Scene";                  //Imports the main 3D scene component that contains objects, lighting, etc
+import fetchAllRatings from "./fetchRatings"; //Imports the data fetch function for Supabase
+import localData from "./data";               // Imports local fallback sample data used if data fetch fails
 import "./index.css";
 
 export default function App() {
