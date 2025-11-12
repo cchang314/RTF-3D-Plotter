@@ -86,3 +86,22 @@ canvas {
   width: 64px; height: 64px; object-fit: cover; border-radius: 8px;
 }
 /* search input in sidepanel */
+/* overlay tooltip adjustments */
+.tooltip-overlay {
+  width: 220px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(5,10,18,0.95), rgba(10,18,30,0.9));
+  box-shadow: 0 6px 18px rgba(0,0,0,0.45);
+  color: #fff;
+}
+.tooltip-overlay img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 6px;
+}
+.tooltip-overlay .info { line-height: 1.05; overflow: hidden; }

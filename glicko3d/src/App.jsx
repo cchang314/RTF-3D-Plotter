@@ -2,9 +2,10 @@
 import React, { useEffect, useState, Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
+
 import Scene from "./Scene";
-import fetchAllRatings from "./fetchRatings"; // default export from your fetchRatings.js
-import localData from "./data"; // local fallback sample
+import fetchAllRatings from "./fetchRatings";
+import localData from "./data";
 import "./index.css";
 
 export default function App() {
@@ -12,17 +13,17 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
 
+  // tooltip overlay state: { visible, x, y, item }
+  const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, item: null });
+
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
         const rows = await fetchAllRatings();
         if (!mounted) return;
-        if (Array.isArray(rows) && rows.length > 0) {
-          setData(rows);
-        } else {
-          setData(localData);
-        }
+        if (Array.isArray(rows) && rows.length > 0) setData(rows);
+        else setData(localData);
       } catch (err) {
         console.error("Failed to fetch ratings, using fallback data:", err);
         setData(localData);
@@ -42,18 +43,51 @@ export default function App() {
         </div>
       </div>
 
-      <div className="canvas-wrap" style={{ gridColumn: "1 / 2" }}>
+      <div className="canvas-wrap" style={{ gridColumn: "1 / 2", position: "relative" }}>
         <Canvas camera={{ position: [12, 12, 18], fov: 50 }}>
           <ambientLight intensity={0.6} />
           <directionalLight position={[10, 15, 10]} intensity={0.8} />
 
-          {/* Wrap Scene in React Suspense so drei/three resources can resolve */}
           <Suspense fallback={null}>
-            <Scene data={data} selected={selected} setSelected={setSelected} />
+            {/* pass setTooltip so Scene can control the DOM overlay tooltip */}
+            <Scene data={data} selected={selected} setSelected={setSelected} setTooltip={setTooltip} />
           </Suspense>
 
-          <OrbitControls />
+          <OrbitControls
+            enableDamping={false}
+            enablePan={true}
+            enableZoom={true}
+            enableRotate={true}
+            dampingFactor={0.0}
+            minDistance={5}
+            maxDistance={40}
+            target={[6, 6, 6]}
+            makeDefault
+          />
         </Canvas>
+
+        {/* DOM tooltip overlay (follows actual mouse position) */}
+        {tooltip.visible && tooltip.item && (
+          <div
+            className="tooltip tooltip-overlay"
+            style={{
+              position: "absolute",
+              left: tooltip.x,
+              top: tooltip.y,
+              transform: "translate(-50%, -120%)", // place above the cursor
+              pointerEvents: "none",
+              zIndex: 9999,
+            }}
+          >
+            <img src={tooltip.item.photo} alt={tooltip.item.name} />
+            <div className="info">
+              <strong>{tooltip.item.name}</strong>
+              <div style={{ fontSize: 12 }}>Rizz: {tooltip.item.rizz}</div>
+              <div style={{ fontSize: 12 }}>Tizz: {tooltip.item.tizz}</div>
+              <div style={{ fontSize: 12 }}>Freak: {tooltip.item.freak}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <aside className="sidepanel">
