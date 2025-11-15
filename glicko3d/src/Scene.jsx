@@ -1,4 +1,4 @@
-// src/Scene.jsx — with nice 3D axis labels + central raycast hover
+// src/Scene.jsx — with camera focusing on selected marker
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import Marker from "./Marker";
 import * as THREE from "three";
@@ -16,8 +16,9 @@ function distancePointToRay(point, rayOrigin, rayDir) {
   return point.distanceTo(closest);
 }
 
-export default function Scene({ data, selected, setSelected, setTooltip }) {
-  const { camera, gl, size } = useThree();
+export default function Scene({ data, selected, setSelected, setTooltip, focusId }) {
+  const { camera, gl } = useThree();
+  const controls = useThree((state) => state.controls);
   const raycasterRef = useRef(new THREE.Raycaster());
   const markersRef = useRef([]);
   const [hoveredId, setHoveredId] = useState(null);
@@ -31,6 +32,7 @@ export default function Scene({ data, selected, setSelected, setTooltip }) {
     });
   }, [data]);
 
+  // central raycast hover / click
   useEffect(() => {
     const dom = gl.domElement;
     if (!dom) return;
@@ -109,14 +111,42 @@ export default function Scene({ data, selected, setSelected, setTooltip }) {
       dom.removeEventListener("pointerout", handlePointerOut);
       dom.removeEventListener("pointerdown", handlePointerDown);
     };
-  }, [camera, gl, size, hoveredId, setSelected, setTooltip]);
+  }, [camera, gl, hoveredId, setSelected, setTooltip]);
+
+  // Focus camera when parent requests focusId
+  useEffect(() => {
+    if (!focusId) return;
+    const m = markersRef.current.find((x) => x.id === focusId);
+    if (!m) return;
+
+    // target point is the marker; camera should move to a nearby offset
+    const target = m.pos.clone();
+    // offset: move camera to the target + vector so the marker sits in view
+    const offset = new THREE.Vector3(6, 6, 8); // tweak as desired
+    const desiredCamPos = target.clone().add(offset);
+
+    let raf = null;
+    const duration = 400; // ms
+    const startTime = performance.now();
+    const startPos = camera.position.clone();
+    const startTarget = controls?.target ? controls.target.clone() : new THREE.Vector3(6, 6, 6);
+
+    function step(now) {
+      const t = Math.min(1, (now - startTime) / duration);
+      const ease = t * (2 - t); // easeOutQuad
+      camera.position.lerpVectors(startPos, desiredCamPos, ease);
+      if (controls?.target) controls.target.lerpVectors(startTarget, target, ease);
+      if (controls?.update) controls.update();
+      if (t < 1) raf = requestAnimationFrame(step);
+    }
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [focusId, camera, controls]);
 
   return (
     <group>
-      {/* Axes lines */}
       <axesHelper args={[12]} position={[0, 0, 0]} />
 
-      {/* Fancy axis labels */}
       <Text
         position={[11.5, 0.3, 0]}
         fontSize={0.7}
@@ -153,7 +183,6 @@ export default function Scene({ data, selected, setSelected, setTooltip }) {
         ← Freak
       </Text>
 
-      {/* Grids for visual depth */}
       <gridHelper args={[12, 12, "#888888", "#222222"]} rotation={[Math.PI / 2, 0, 0]} position={[6, 6, 0]} />
       <gridHelper args={[12, 12, "#666666", "#111111"]} position={[6, 0, 6]} />
       <gridHelper args={[12, 12, "#666666", "#111111"]} rotation={[0, 0, Math.PI / 2]} position={[0, 6, 6]} />

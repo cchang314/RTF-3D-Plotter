@@ -1,20 +1,22 @@
 // src/App.jsx
-import React, { useEffect, useState, Suspense } from "react"; //Imports React library & hooks for state, lifecycle, and lazy loading
-import { Canvas } from "@react-three/fiber";       //Adds the React-managed 3D rendering surface (wrapper around Three.js so 3D components can be treated as React components)
-import { OrbitControls } from "@react-three/drei"; //Adds camera controls to the 3D scene
+import React, { useEffect, useState, Suspense, useRef } from "react";
+import { Canvas } from "@react-three/fiber";
+import { OrbitControls } from "@react-three/drei";
 
-import Scene from "./Scene";                  //Imports the main 3D scene component that contains objects, lighting, etc
-import fetchAllRatings from "./fetchRatings"; //Imports the data fetch function for Supabase
-import localData from "./data";               // Imports local fallback sample data used if data fetch fails
+import Scene from "./Scene";
+import fetchAllRatings from "./fetchRatings";
+import localData from "./data";
+import SearchBar from "./SearchBar";
 import "./index.css";
 
 export default function App() {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState(null);
-
-  // tooltip overlay state: { visible, x, y, item }
   const [tooltip, setTooltip] = useState({ visible: false, x: 0, y: 0, item: null });
+
+  // small signaling prop — when we want Scene to focus camera on a member we set this id
+  const [focusId, setFocusId] = useState(null);
 
   useEffect(() => {
     let mounted = true;
@@ -34,6 +36,16 @@ export default function App() {
     return () => { mounted = false; };
   }, []);
 
+  function handleSelectFromUI(member) {
+    setSelected(member);
+    if (member?.id) {
+      // request Scene to focus this id
+      setFocusId(member.id);
+      // clear focusId after short delay so repeated same-id clicks still work
+      setTimeout(() => setFocusId(null), 600);
+    }
+  }
+
   return (
     <div className="app">
       <div className="header">
@@ -49,8 +61,13 @@ export default function App() {
           <directionalLight position={[10, 15, 10]} intensity={0.8} />
 
           <Suspense fallback={null}>
-            {/* pass setTooltip so Scene can control the DOM overlay tooltip */}
-            <Scene data={data} selected={selected} setSelected={setSelected} setTooltip={setTooltip} />
+            <Scene
+              data={data}
+              selected={selected}
+              setSelected={setSelected}
+              setTooltip={setTooltip}
+              focusId={focusId}
+            />
           </Suspense>
 
           <OrbitControls
@@ -66,7 +83,6 @@ export default function App() {
           />
         </Canvas>
 
-        {/* DOM tooltip overlay (follows actual mouse position) */}
         {tooltip.visible && tooltip.item && (
           <div
             className="tooltip tooltip-overlay"
@@ -74,7 +90,7 @@ export default function App() {
               position: "absolute",
               left: tooltip.x,
               top: tooltip.y,
-              transform: "translate(-50%, -120%)", // place above the cursor
+              transform: "translate(-50%, -120%)",
               pointerEvents: "none",
               zIndex: 9999,
             }}
@@ -91,6 +107,14 @@ export default function App() {
       </div>
 
       <aside className="sidepanel">
+        <div style={{ marginBottom: 12 }}>
+          <SearchBar
+            data={data}
+            onSelect={(m) => handleSelectFromUI(m)}
+            placeholder="Search members by name..."
+          />
+        </div>
+
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
           <div style={{ width: 64, height: 64 }}>
             {selected ? (
@@ -105,9 +129,7 @@ export default function App() {
           </div>
           <div>
             <div style={{ fontWeight: 700 }}>{selected ? selected.name : "No selection"}</div>
-            <div style={{ color: "var(--muted)", fontSize: 13 }}>
-              Click a dot to inspect
-            </div>
+            <div style={{ color: "var(--muted)", fontSize: 13 }}>Click a dot to inspect</div>
           </div>
         </div>
 
@@ -117,8 +139,11 @@ export default function App() {
           <strong>Quick list</strong>
           <ul style={{ paddingLeft: 16 }}>
             {data.slice(0, 8).map((m) => (
-              <li key={m.id} style={{ margin: "6px 0", cursor: "pointer" }}
-                  onClick={() => setSelected(m)}>
+              <li
+                key={m.id}
+                style={{ margin: "6px 0", cursor: "pointer" }}
+                onClick={() => handleSelectFromUI(m)}
+              >
                 {m.name} — r:{m.rizz} t:{m.tizz} f:{m.freak}
               </li>
             ))}
